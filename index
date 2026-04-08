@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LINE定型文作成ツール</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  padding: 15px;
+  max-width: 500px;
+  margin: auto;
+}
+
+input, select, button, textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #06C755;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+textarea {
+  height: 260px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>LINE定型文作成ツール</h2>
+
+<p>日付：</p>
+<select id="timing">
+  <option value="明日">明日</option>
+  <option value="明後日">明後日</option>
+</select>
+
+<p>案件：</p>
+<select id="template">
+  <option value="AM弁当チャーター">AM弁当チャーター</option>
+  <option value="1日弁当チャーター">1日弁当チャーター</option>
+</select>
+
+<h3>ドライバー</h3>
+<input id="name1" placeholder="名前">
+
+<button onclick="makeText()">文章作成</button>
+
+<textarea id="result"></textarea>
+
+<button onclick="copyText()">コピー</button>
+<button onclick="sendToLINE()">LINEで送る</button>
+
+<script>
+function getDate(offset) {
+  let d = new Date();
+  d.setDate(d.getDate() + offset);
+  let w = ["日","月","火","水","木","金","土"];
+  return `${d.getMonth()+1}月${d.getDate()}日(${w[d.getDay()]})`;
+}
+
+function makeText() {
+  let name = document.getElementById("name1").value;
+  let timing = document.getElementById("timing").value;
+  let template = document.getElementById("template").value;
+
+  let date = timing === "明日" ? getDate(1) : getDate(2);
+
+  let text =
+`お疲れ様です。
+
+${name}さん
+
+${timing}
+${date}
+${template}
+
+宜しくお願い致します。`;
+
+  document.getElementById("result").value = text;
+}
+
+function copyText() {
+  let text = document.getElementById("result").value;
+  navigator.clipboard.writeText(text);
+  alert("コピーしました");
+}
+
+function sendToLINE() {
+  let text = document.getElementById("result").value;
+  let url = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
+  location.href = url;
+}
+</script>
+
+</body>
+</html>
