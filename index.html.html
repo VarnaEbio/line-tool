@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LINE定型文作成ツール（完全体）</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  padding: 15px;
+  max-width: 500px;
+  margin: auto;
+}
+
+input, select, button, textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+button {
+  background-color: #06C755;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+textarea {
+  height: 260px;
+}
+
+.subBtn {
+  background-color: #555;
+}
+
+#individualButtons button {
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>LINE定型文作成ツール</h2>
+
+<p>日付：</p>
+<select id="timing">
+  <option value="明日">明日</option>
+  <option value="明後日">明後日</option>
+  <option value="週明け">週明け（月曜）</option>
+</select>
+
+<p>案件：</p>
+<select id="template">
+  <option value="AM弁当チャーター">AM弁当チャーター</option>
+  <option value="1日弁当チャーター">1日弁当チャーター</option>
+</select>
+
+<h3>ドライバー（最大5名）</h3>
+<input id="name1" placeholder="ドライバー1">
+<input id="name2" placeholder="ドライバー2">
+<input id="name3" placeholder="ドライバー3">
+<input id="name4" placeholder="ドライバー4">
+<input id="name5" placeholder="ドライバー5">
+
+<button onclick="makeText()">文章作成</button>
+
+<h3>結果</h3>
+<textarea id="result"></textarea>
+
+<button onclick="copyText()">コピー（確実）</button>
+<button onclick="sendToLINE()">LINEで送る（簡単）</button>
+
+<h3>個別送信</h3>
+<div id="individualButtons"></div>
+
+<script>
+
+// 日付生成
+function getFormattedDate(timing) {
+  let date = new Date();
+
+  if (timing === "明日") {
+    date.setDate(date.getDate() + 1);
+  } else if (timing === "明後日") {
+    date.setDate(date.getDate() + 2);
+  } else if (timing === "週明け") {
+    let day = date.getDay();
+    let diff = (8 - day) % 7;
+    if (diff === 0) diff = 7;
+    date.setDate(date.getDate() + diff);
+  }
+
+  let week = ["日","月","火","水","木","金","土"];
+  return `${date.getMonth()+1}月${date.getDate()}日(${week[date.getDay()]})`;
+}
+
+// LINE開く（最強安定版）
+function openLINE(text) {
+  let encoded = encodeURIComponent(text);
+
+  let link = document.createElement("a");
+  link.href = "https://line.me/R/msg/text/?" + encoded;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// 文章作成
+function makeText() {
+  let names = [];
+
+  ["name1","name2","name3","name4","name5"].forEach(id => {
+    let val = document.getElementById(id).value;
+    if (val) names.push(val);
+  });
+
+  let driverText = names.length > 0
+    ? names.join("さん\n") + "さん"
+    : "";
+
+  let timing = document.getElementById("timing").value;
+  let content = document.getElementById("template").value;
+  let date = getFormattedDate(timing);
+
+  let text =
+`お疲れ様です。
+
+${driverText}
+
+${timing}
+${date}
+${content}
+
+●伝票の注意事項しっかりと確認してください。
+●着車時間余裕をもち出発お願いします。
+●請求書のテレコ発生しています。
+ピックアップ先で確認お願いします。
+●商品ピックアップ漏れ発生してます。
+伝票右下に確認する欄ありますのでそこで確実にチェックしてください。
+チェックせずにピック漏れした場合、自己負担金発生する場合あります。
+⬆️
+一撃8万円負担金発生事例あります。。
+
+⚠️時間を確実に守るようにしてください。
+⚠️ピック遅れ、納品遅れ、少しでも何か現場で起きた場合スタフェスへの050-3388-7522に連絡徹底してください。
+
+宜しくお願い致します。`;
+
+  document.getElementById("result").value = text;
+
+  // 個別ボタン生成
+  let container = document.getElementById("individualButtons");
+  container.innerHTML = "";
+
+  names.forEach(name => {
+    let btn = document.createElement("button");
+    btn.innerText = name + "さんに送る";
+
+    btn.onclick = function() {
+      sendIndividual(name);
+    };
+
+    container.appendChild(btn);
+  });
+}
+
+// コピー（最強安定）
+function copyText() {
+  let text = document.getElementById("result").value;
+
+  navigator.clipboard.writeText(text)
+    .then(() => alert("コピーしました"))
+    .catch(() => alert("コピー失敗"));
+}
+
+// 全体送信
+function sendToLINE() {
+  let text = document.getElementById("result").value;
+
+  if (!text) {
+    alert("先に文章を作成してください");
+    return;
+  }
+
+  openLINE(text);
+}
+
+// 個別送信
+function sendIndividual(name) {
+  let timing = document.getElementById("timing").value;
+  let content = document.getElementById("template").value;
+  let date = getFormattedDate(timing);
+
+  let text =
+`お疲れ様です。
+
+${name}さん
+
+${timing}
+${date}
+${content}
+
+●伝票の注意事項しっかりと確認してください。
+●着車時間余裕をもち出発お願いします。
+●請求書のテレコ発生しています。
+ピックアップ先で確認お願いします。
+●商品ピックアップ漏れ発生してます。
+伝票右下に確認する欄ありますのでそこで確実にチェックしてください。
+チェックせずにピック漏れした場合、自己負担金発生する場合あります。
+⬆️
+一撃8万円負担金発生事例あります。。
+
+⚠️時間を確実に守るようにしてください。
+⚠️ピック遅れ、納品遅れ、少しでも何か現場で起きた場合スタフェスへの050-3388-7522に連絡徹底してください。
+
+宜しくお願い致します。`;
+
+  openLINE(text);
+}
+
+</script>
+
+</body>
+</html>
