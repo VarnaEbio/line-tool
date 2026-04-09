@@ -159,38 +159,23 @@
       return `${date.getMonth() + 1}月${date.getDate()}日(${week[date.getDay()]})`;
     }
 
-    function getDriverNames() {
-      const ids = ["name1", "name2", "name3", "name4", "name5"];
-      const names = [];
-
-      ids.forEach(function(id) {
-        const value = document.getElementById(id).value.trim();
-        if (value !== "") {
-          names.push(value);
-        }
-      });
-
-      return names;
-    }
-
     function buildMessageForNames(names) {
-      const timing = document.getElementById("timing").value;
-      const template = document.getElementById("template").value;
-      const formattedDate = getFormattedDate(timing);
+  const timing = document.getElementById("timing").value;
+  const template = document.getElementById("template").value;
+  const formattedDate = getFormattedDate(timing);
 
-      let nameBlock = "";
-      if (names.length > 0) {
-        nameBlock = names.map(function(name) {
-          return name + "さん";
-        }).join("\n");
-      }
+  let nameBlock = "";
+  if (names.length > 0) {
+    nameBlock = names.map(function(name) {
+      return name + "さん";
+    }).join("\n");
+  }
 
-      const text =
+  const text =
 `お疲れ様です。
 
 ${nameBlock ? nameBlock + "\n\n" : ""}${timing}
 ${formattedDate}
-
 ${template}
 
 ●伝票の注意事項しっかりと確認してください。
@@ -208,41 +193,8 @@ ${template}
 
 宜しくお願い致します。`;
 
-      return text;
-    }
-
-    function makeText() {
-      const names = getDriverNames();
-      const text = buildMessageForNames(names);
-      document.getElementById("result").value = text;
-      renderIndividualButtons(names);
-    }
-
-    function copyText() {
-      const text = document.getElementById("result").value;
-
-      if (!text.trim()) {
-        alert("先に文章を作成してください。");
-        return;
-      }
-
-      navigator.clipboard.writeText(text)
-        .then(function() {
-          alert("コピーしました。");
-        })
-        .catch(function() {
-          alert("コピーに失敗しました。");
-        });
-    }
-
-    function renderIndividualButtons(names) {
-      const container = document.getElementById("individualButtons");
-      container.innerHTML = "";
-
-      if (names.length === 0) {
-        container.innerHTML = '<div class="note">ドライバー名を入れて「文章作成」を押すと、ここに個別ボタンが出ます。</div>';
-        return;
-      }
+  return text;
+}
 
       names.forEach(function(name) {
         const btn = document.createElement("button");
