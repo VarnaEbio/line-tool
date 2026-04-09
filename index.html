@@ -136,9 +136,7 @@
       <button class="btn-sub" type="button" onclick="copyText()">コピー</button>
       <button class="btn-line" type="button" onclick="openLineFromResult()">LINEを開く</button>
       <div class="note">
-        LINEは環境によって直接開かないことがあります。<br>
-        その場合は「コピー」→ LINEに貼り付けで使ってください。<br>
-        GitHub Pages のURLで開くと安定しやすいです。
+        LINEが開かない端末では、「コピー」してLINEに貼り付けて使ってください。
       </div>
     </div>
 
@@ -166,7 +164,7 @@
       }
 
       const week = ["日", "月", "火", "水", "木", "金", "土"];
-      return `${date.getMonth() + 1}月${date.getDate()}日(${week[date.getDay()]})`;
+      return (date.getMonth() + 1) + "月" + date.getDate() + "日(" + week[date.getDay()] + ")";
     }
 
     function getDriverNames() {
@@ -174,7 +172,8 @@
       const names = [];
 
       ids.forEach(function(id) {
-        const value = document.getElementById(id).value.trim();
+        const el = document.getElementById(id);
+        const value = el.value.trim();
         if (value !== "") {
           names.push(value);
         }
@@ -253,7 +252,6 @@ ${template}
 
       const encoded = encodeURIComponent(text);
       const url = "https://line.me/R/msg/text/?" + encoded;
-
       window.location.href = url;
     }
 
