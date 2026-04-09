@@ -129,37 +129,24 @@
       <label for="reward">ドライバーへの報酬（数字のみ）</label>
       <input id="reward" type="number" placeholder="例：13000">
 
-      <label for="units">台口（数字のみ）</label>
-      <input id="units" type="number" min="1" max="5" value="2" oninput="updateDriverFields()">
+      <label for="units">台口（数字のみ・最大10）</label>
+      <input id="units" type="number" min="1" max="10" value="2">
 
-      <label for="arrivalTime">着車時間</label>
-      <select id="arrivalTime">
-        <option value="09:00着車">09:00着車</option>
-        <option value="10:00着車">10:00着車</option>
-        <option value="11:00着車">11:00着車</option>
-        <option value="12:00着車">12:00着車</option>
-        <option value="13:00着車">13:00着車</option>
-        <option value="14:00着車">14:00着車</option>
-        <option value="15:00着車">15:00着車</option>
-        <option value="16:00着車">16:00着車</option>
-        <option value="17:00着車">17:00着車</option>
-        <option value="18:00着車">18:00着車</option>
-      </select>
+      <label for="arrivalTime">着車時間（数字4桁）</label>
+      <input id="arrivalTime" type="text" inputmode="numeric" maxlength="5" placeholder="例：1300">
 
       <h2>ドライバー</h2>
-      <div id="driverFields">
-        <input id="driver1" type="text" placeholder="ドライバー1">
-        <input id="driver2" type="text" placeholder="ドライバー2">
-        <input id="driver3" type="text" placeholder="ドライバー3" class="hidden">
-        <input id="driver4" type="text" placeholder="ドライバー4" class="hidden">
-        <input id="driver5" type="text" placeholder="ドライバー5" class="hidden">
-      </div>
+      <div id="driverFields"></div>
 
       <label for="minamisunaDriver">南砂倉庫 担当</label>
-      <select id="minamisunaDriver"></select>
+      <select id="minamisunaDriver">
+        <option value="">選択してください</option>
+      </select>
 
       <label for="ougibashiDriver">扇橋オフィス 担当</label>
-      <select id="ougibashiDriver"></select>
+      <select id="ougibashiDriver">
+        <option value="">選択してください</option>
+      </select>
 
       <button class="btn-main" type="button" onclick="makeText()">文章作成</button>
     </div>
@@ -194,11 +181,48 @@
       return `${date.getMonth() + 1}月${date.getDate()}日（${week[date.getDay()]}）`;
     }
 
-    function updateDriverFields() {
-      const units = parseInt(document.getElementById("units").value, 10) || 1;
+    function formatYen(value) {
+      if (!value) return "";
+      return "¥" + Number(value).toLocaleString();
+    }
 
-      for (let i = 1; i <= 5; i++) {
+    function formatUnits(value) {
+      if (!value) return "";
+      return value + "台口";
+    }
+
+    function formatArrivalTime(value) {
+      const numbers = value.replace(/\D/g, "").slice(0, 4);
+
+      if (numbers.length <= 2) {
+        return numbers;
+      }
+
+      return numbers.slice(0, 2) + ":" + numbers.slice(2);
+    }
+
+    function buildDriverFields() {
+      const container = document.getElementById("driverFields");
+      container.innerHTML = "";
+
+      for (let i = 1; i <= 10; i++) {
+        const input = document.createElement("input");
+        input.id = "driver" + i;
+        input.type = "text";
+        input.placeholder = "ドライバー" + i;
+        input.className = i <= 2 ? "" : "hidden";
+        input.addEventListener("input", updateDriverSelects);
+        container.appendChild(input);
+      }
+    }
+
+    function updateDriverFields() {
+      const units = Math.min(Math.max(parseInt(document.getElementById("units").value, 10) || 1, 1), 10);
+
+      for (let i = 1; i <= 10; i++) {
         const field = document.getElementById("driver" + i);
+        if (!field) continue;
+
         if (i <= units) {
           field.classList.remove("hidden");
         } else {
@@ -211,11 +235,14 @@
     }
 
     function getDriverNames() {
-      const units = parseInt(document.getElementById("units").value, 10) || 1;
+      const units = Math.min(Math.max(parseInt(document.getElementById("units").value, 10) || 1, 1), 10);
       const names = [];
 
       for (let i = 1; i <= units; i++) {
-        const value = document.getElementById("driver" + i).value.trim();
+        const field = document.getElementById("driver" + i);
+        if (!field) continue;
+
+        const value = field.value.trim();
         if (value) {
           names.push(value);
         }
@@ -228,6 +255,9 @@
       const names = getDriverNames();
       const minamisuna = document.getElementById("minamisunaDriver");
       const ougibashi = document.getElementById("ougibashiDriver");
+
+      const currentMinamisuna = minamisuna.value;
+      const currentOugibashi = ougibashi.value;
 
       minamisuna.innerHTML = "";
       ougibashi.innerHTML = "";
@@ -253,6 +283,14 @@
         opt2.textContent = name;
         ougibashi.appendChild(opt2);
       });
+
+      if (names.includes(currentMinamisuna)) {
+        minamisuna.value = currentMinamisuna;
+      }
+
+      if (names.includes(currentOugibashi)) {
+        ougibashi.value = currentOugibashi;
+      }
     }
 
     function makeText() {
@@ -261,13 +299,14 @@
       const jobContent = document.getElementById("jobContent").value;
       const rewardRaw = document.getElementById("reward").value.trim();
       const unitsRaw = document.getElementById("units").value.trim();
-      const arrivalTime = document.getElementById("arrivalTime").value;
+      const arrivalRaw = document.getElementById("arrivalTime").value.trim();
       const minamisunaDriver = document.getElementById("minamisunaDriver").value;
       const ougibashiDriver = document.getElementById("ougibashiDriver").value;
       const driverNames = getDriverNames();
 
-      const reward = rewardRaw ? "¥" + Number(rewardRaw).toLocaleString() : "";
-      const units = unitsRaw ? unitsRaw + "台口" : "";
+      const reward = formatYen(rewardRaw);
+      const units = formatUnits(unitsRaw);
+      const arrivalTime = formatArrivalTime(arrivalRaw) ? formatArrivalTime(arrivalRaw) + "着車" : "";
 
       let driverBlock = "";
       if (driverNames.length > 0) {
@@ -352,13 +391,16 @@ PDFの時間に合わせて
       window.location.href = url;
     }
 
-    document.addEventListener("input", function(e) {
-      if (e.target.id.startsWith("driver")) {
-        updateDriverSelects();
-      }
-    });
+    document.addEventListener("DOMContentLoaded", function() {
+      buildDriverFields();
+      updateDriverFields();
 
-    updateDriverFields();
+      document.getElementById("units").addEventListener("input", updateDriverFields);
+
+      document.getElementById("arrivalTime").addEventListener("input", function(e) {
+        e.target.value = formatArrivalTime(e.target.value);
+      });
+    });
   </script>
 </body>
 </html>
