@@ -13,7 +13,7 @@
     }
 
     .wrap {
-      max-width: 680px;
+      max-width: 700px;
       margin: 0 auto;
     }
 
@@ -97,6 +97,10 @@
       margin-top: 8px;
       line-height: 1.5;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -114,28 +118,48 @@
       </select>
 
       <label for="jobContent">案件内容</label>
-      <input id="jobContent" type="text" value="往復便（配達と回収）">
+      <select id="jobContent">
+        <option value="往復便（配達と回収）">往復便（配達と回収）</option>
+        <option value="オードブル配達のみ">オードブル配達のみ</option>
+        <option value="往復便+オードブル配達のみ">往復便+オードブル配達のみ</option>
+        <option value="往復便+オードブル配達のみ(同時積み込み)">往復便+オードブル配達のみ(同時積み込み)</option>
+        <option value="回収のみ">回収のみ</option>
+      </select>
 
-      <label for="reward">ドライバーへの報酬</label>
-      <input id="reward" type="text" value="¥13,000">
+      <label for="reward">ドライバーへの報酬（数字のみ）</label>
+      <input id="reward" type="number" placeholder="例：13000">
 
-      <label for="units">台口</label>
-      <input id="units" type="text" value="2台口">
-
-      <label for="driver1">ドライバー1</label>
-      <input id="driver1" type="text" placeholder="例：碓井さん（キャプテン）">
-
-      <label for="driver2">ドライバー2</label>
-      <input id="driver2" type="text" placeholder="例：康田さん">
+      <label for="units">台口（数字のみ）</label>
+      <input id="units" type="number" min="1" max="5" value="2" oninput="updateDriverFields()">
 
       <label for="arrivalTime">着車時間</label>
-      <input id="arrivalTime" type="text" placeholder="例：13:00着車">
-
-      <label for="locationType">着車場所</label>
-      <select id="locationType">
-        <option value="南砂倉庫">南砂倉庫</option>
-        <option value="扇橋オフィス">扇橋オフィス</option>
+      <select id="arrivalTime">
+        <option value="09:00着車">09:00着車</option>
+        <option value="10:00着車">10:00着車</option>
+        <option value="11:00着車">11:00着車</option>
+        <option value="12:00着車">12:00着車</option>
+        <option value="13:00着車">13:00着車</option>
+        <option value="14:00着車">14:00着車</option>
+        <option value="15:00着車">15:00着車</option>
+        <option value="16:00着車">16:00着車</option>
+        <option value="17:00着車">17:00着車</option>
+        <option value="18:00着車">18:00着車</option>
       </select>
+
+      <h2>ドライバー</h2>
+      <div id="driverFields">
+        <input id="driver1" type="text" placeholder="ドライバー1">
+        <input id="driver2" type="text" placeholder="ドライバー2">
+        <input id="driver3" type="text" placeholder="ドライバー3" class="hidden">
+        <input id="driver4" type="text" placeholder="ドライバー4" class="hidden">
+        <input id="driver5" type="text" placeholder="ドライバー5" class="hidden">
+      </div>
+
+      <label for="minamisunaDriver">南砂倉庫 担当</label>
+      <select id="minamisunaDriver"></select>
+
+      <label for="ougibashiDriver">扇橋オフィス 担当</label>
+      <select id="ougibashiDriver"></select>
 
       <button class="btn-main" type="button" onclick="makeText()">文章作成</button>
     </div>
@@ -162,9 +186,7 @@
       } else if (timing === "週明け") {
         const day = date.getDay();
         let diff = (8 - day) % 7;
-        if (diff === 0) {
-          diff = 7;
-        }
+        if (diff === 0) diff = 7;
         date.setDate(date.getDate() + diff);
       }
 
@@ -172,42 +194,85 @@
       return `${date.getMonth() + 1}月${date.getDate()}日（${week[date.getDay()]}）`;
     }
 
-    function getLocationText(locationType, driver1, driver2) {
-      if (locationType === "南砂倉庫") {
-        return `【南砂倉庫】
-江東区南砂1-1-6
+    function updateDriverFields() {
+      const units = parseInt(document.getElementById("units").value, 10) || 1;
 
-${driver1}
-`;
+      for (let i = 1; i <= 5; i++) {
+        const field = document.getElementById("driver" + i);
+        if (i <= units) {
+          field.classList.remove("hidden");
+        } else {
+          field.classList.add("hidden");
+          field.value = "";
+        }
       }
 
-      if (locationType === "扇橋オフィス") {
-        return `【扇橋オフィス】
-江東区扇橋2-18-5
+      updateDriverSelects();
+    }
 
-${driver2}
-`;
+    function getDriverNames() {
+      const units = parseInt(document.getElementById("units").value, 10) || 1;
+      const names = [];
+
+      for (let i = 1; i <= units; i++) {
+        const value = document.getElementById("driver" + i).value.trim();
+        if (value) {
+          names.push(value);
+        }
       }
 
-      return "";
+      return names;
+    }
+
+    function updateDriverSelects() {
+      const names = getDriverNames();
+      const minamisuna = document.getElementById("minamisunaDriver");
+      const ougibashi = document.getElementById("ougibashiDriver");
+
+      minamisuna.innerHTML = "";
+      ougibashi.innerHTML = "";
+
+      const blank1 = document.createElement("option");
+      blank1.value = "";
+      blank1.textContent = "選択してください";
+      minamisuna.appendChild(blank1);
+
+      const blank2 = document.createElement("option");
+      blank2.value = "";
+      blank2.textContent = "選択してください";
+      ougibashi.appendChild(blank2);
+
+      names.forEach(function(name) {
+        const opt1 = document.createElement("option");
+        opt1.value = name;
+        opt1.textContent = name;
+        minamisuna.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = name;
+        opt2.textContent = name;
+        ougibashi.appendChild(opt2);
+      });
     }
 
     function makeText() {
       const timing = document.getElementById("timing").value;
       const formattedDate = getFormattedDate(timing);
-      const jobContent = document.getElementById("jobContent").value.trim();
-      const reward = document.getElementById("reward").value.trim();
-      const units = document.getElementById("units").value.trim();
-      const driver1 = document.getElementById("driver1").value.trim();
-      const driver2 = document.getElementById("driver2").value.trim();
-      const arrivalTime = document.getElementById("arrivalTime").value.trim();
-      const locationType = document.getElementById("locationType").value;
+      const jobContent = document.getElementById("jobContent").value;
+      const rewardRaw = document.getElementById("reward").value.trim();
+      const unitsRaw = document.getElementById("units").value.trim();
+      const arrivalTime = document.getElementById("arrivalTime").value;
+      const minamisunaDriver = document.getElementById("minamisunaDriver").value;
+      const ougibashiDriver = document.getElementById("ougibashiDriver").value;
+      const driverNames = getDriverNames();
+
+      const reward = rewardRaw ? "¥" + Number(rewardRaw).toLocaleString() : "";
+      const units = unitsRaw ? unitsRaw + "台口" : "";
 
       let driverBlock = "";
-      if (driver1) driverBlock += driver1 + "\n";
-      if (driver2) driverBlock += driver2 + "\n";
-
-      const locationText = getLocationText(locationType, driver1, driver2);
+      if (driverNames.length > 0) {
+        driverBlock = driverNames.join("\n");
+      }
 
       const text =
 `${timing}
@@ -219,8 +284,16 @@ ${reward}
 
 ${units}
 ${driverBlock}
+
 ${arrivalTime}
-${locationText}
+【南砂倉庫】
+江東区南砂1-1-6
+${minamisunaDriver}
+
+【扇橋オフィス】
+江東区扇橋2-18-5
+${ougibashiDriver}
+
 🚫全員にお願いです🚫
 『時間通り』に着車して下さい。
 
@@ -278,6 +351,14 @@ PDFの時間に合わせて
       const url = "https://line.me/R/msg/text/?" + encoded;
       window.location.href = url;
     }
+
+    document.addEventListener("input", function(e) {
+      if (e.target.id.startsWith("driver")) {
+        updateDriverSelects();
+      }
+    });
+
+    updateDriverFields();
   </script>
 </body>
 </html>
