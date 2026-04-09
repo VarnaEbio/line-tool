@@ -82,6 +82,10 @@
       background: #2d7ef7;
     }
 
+    .btn-line {
+      background: #00b900;
+    }
+
     .btn-driver {
       background: #555;
     }
@@ -90,6 +94,7 @@
       color: #666;
       font-size: 13px;
       margin-top: 8px;
+      line-height: 1.5;
     }
 
     #individualButtons button {
@@ -129,7 +134,13 @@
       <h2>生成結果</h2>
       <textarea id="result" placeholder="ここに文章が表示されます"></textarea>
       <button class="btn-sub" type="button" onclick="copyText()">コピー</button>
-
+      <button class="btn-line" type="button" onclick="openLineFromResult()">LINEを開く</button>
+      <div class="note">
+        LINEは環境によって直接開かないことがあります。<br>
+        その場合は「コピー」→ LINEに貼り付けで使ってください。<br>
+        GitHub Pages のURLで開くと安定しやすいです。
+      </div>
+    </div>
 
     <div class="card">
       <h2>個別送信用ボタン</h2>
@@ -158,23 +169,38 @@
       return `${date.getMonth() + 1}月${date.getDate()}日(${week[date.getDay()]})`;
     }
 
+    function getDriverNames() {
+      const ids = ["name1", "name2", "name3", "name4", "name5"];
+      const names = [];
+
+      ids.forEach(function(id) {
+        const value = document.getElementById(id).value.trim();
+        if (value !== "") {
+          names.push(value);
+        }
+      });
+
+      return names;
+    }
+
     function buildMessageForNames(names) {
-  const timing = document.getElementById("timing").value;
-  const template = document.getElementById("template").value;
-  const formattedDate = getFormattedDate(timing);
+      const timing = document.getElementById("timing").value;
+      const template = document.getElementById("template").value;
+      const formattedDate = getFormattedDate(timing);
 
-  let nameBlock = "";
-  if (names.length > 0) {
-    nameBlock = names.map(function(name) {
-      return name + "さん";
-    }).join("\n");
-  }
+      let nameBlock = "";
+      if (names.length > 0) {
+        nameBlock = names.map(function(name) {
+          return name + "さん";
+        }).join("\n");
+      }
 
-  const text =
+      const text =
 `お疲れ様です。
 
 ${nameBlock ? nameBlock + "\n\n" : ""}${timing}
 ${formattedDate}
+
 ${template}
 
 ●伝票の注意事項しっかりと確認してください。
@@ -192,19 +218,79 @@ ${template}
 
 宜しくお願い致します。`;
 
-  return text;
-}
+      return text;
+    }
+
+    function makeText() {
+      const names = getDriverNames();
+      const text = buildMessageForNames(names);
+      document.getElementById("result").value = text;
+      renderIndividualButtons(names);
+    }
+
+    function copyText() {
+      const text = document.getElementById("result").value;
+
+      if (!text.trim()) {
+        alert("先に文章を作成してください。");
+        return;
+      }
+
+      navigator.clipboard.writeText(text)
+        .then(function() {
+          alert("コピーしました。");
+        })
+        .catch(function() {
+          alert("コピーに失敗しました。");
+        });
+    }
+
+    function openLineText(text) {
+      if (!text.trim()) {
+        alert("先に文章を作成してください。");
+        return;
+      }
+
+      const encoded = encodeURIComponent(text);
+      const url = "https://line.me/R/msg/text/?" + encoded;
+
+      window.location.href = url;
+    }
+
+    function openLineFromResult() {
+      const text = document.getElementById("result").value;
+      openLineText(text);
+    }
+
+    function renderIndividualButtons(names) {
+      const container = document.getElementById("individualButtons");
+      container.innerHTML = "";
+
+      if (names.length === 0) {
+        container.innerHTML = '<div class="note">ドライバー名を入れて「文章作成」を押すと、ここに個別ボタンが出ます。</div>';
+        return;
+      }
 
       names.forEach(function(name) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn-driver";
-        btn.textContent = name + "さん用を作成";
-        btn.onclick = function() {
+        const btnMake = document.createElement("button");
+        btnMake.type = "button";
+        btnMake.className = "btn-driver";
+        btnMake.textContent = name + "さん用を作成";
+        btnMake.onclick = function() {
           const text = buildMessageForNames([name]);
           document.getElementById("result").value = text;
         };
-        container.appendChild(btn);
+        container.appendChild(btnMake);
+
+        const btnLine = document.createElement("button");
+        btnLine.type = "button";
+        btnLine.className = "btn-line";
+        btnLine.textContent = name + "さん用をLINEで開く";
+        btnLine.onclick = function() {
+          const text = buildMessageForNames([name]);
+          openLineText(text);
+        };
+        container.appendChild(btnLine);
       });
     }
 
