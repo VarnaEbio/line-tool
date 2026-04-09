@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ケータリング案件</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 16px;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 16px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 12px 0 6px;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      border-radius: 10px;
+    }
+
+    input,
+    select,
+    textarea {
+      padding: 12px;
+      border: 1px solid #ccc;
+      background: #fff;
+      margin-top: 8px;
+    }
+
+    textarea {
+      min-height: 360px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    button {
+      border: none;
+      padding: 14px;
+      margin-top: 10px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .btn-main {
+      background: #06c755;
+    }
+
+    .btn-sub {
+      background: #2d7ef7;
+    }
+
+    .btn-line {
+      background: #00b900;
+    }
+
+    .btn-back {
+      background: #666;
+    }
+
+    .note {
+      color: #666;
+      font-size: 13px;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <button class="btn-back" type="button" onclick="location.href='index.html'">案件選択へ戻る</button>
+
+      <h1>ケータリング案件</h1>
+
+      <label for="timing">日付区分</label>
+      <select id="timing">
+        <option value="明日">明日</option>
+        <option value="明後日">明後日</option>
+        <option value="週明け">週明け</option>
+      </select>
+
+      <label for="jobContent">案件内容</label>
+      <input id="jobContent" type="text" value="往復便（配達と回収）">
+
+      <label for="reward">ドライバーへの報酬</label>
+      <input id="reward" type="text" value="¥13,000">
+
+      <label for="units">台口</label>
+      <input id="units" type="text" value="2台口">
+
+      <label for="driver1">ドライバー1</label>
+      <input id="driver1" type="text" placeholder="例：碓井さん（キャプテン）">
+
+      <label for="driver2">ドライバー2</label>
+      <input id="driver2" type="text" placeholder="例：康田さん">
+
+      <label for="arrivalTime">着車時間</label>
+      <input id="arrivalTime" type="text" placeholder="例：13:00着車">
+
+      <label for="locationType">着車場所</label>
+      <select id="locationType">
+        <option value="南砂倉庫">南砂倉庫</option>
+        <option value="扇橋オフィス">扇橋オフィス</option>
+      </select>
+
+      <button class="btn-main" type="button" onclick="makeText()">文章作成</button>
+    </div>
+
+    <div class="card">
+      <h2>生成結果</h2>
+      <textarea id="result" placeholder="ここに文章が表示されます"></textarea>
+      <button class="btn-sub" type="button" onclick="copyText()">コピー</button>
+      <button class="btn-line" type="button" onclick="openLineFromResult()">LINEを開く</button>
+      <div class="note">
+        LINEが開かない場合は、「コピー」してLINEに貼り付けて使ってください。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getFormattedDate(timing) {
+      const date = new Date();
+
+      if (timing === "明日") {
+        date.setDate(date.getDate() + 1);
+      } else if (timing === "明後日") {
+        date.setDate(date.getDate() + 2);
+      } else if (timing === "週明け") {
+        const day = date.getDay();
+        let diff = (8 - day) % 7;
+        if (diff === 0) {
+          diff = 7;
+        }
+        date.setDate(date.getDate() + diff);
+      }
+
+      const week = ["日", "月", "火", "水", "木", "金", "土"];
+      return `${date.getMonth() + 1}月${date.getDate()}日（${week[date.getDay()]}）`;
+    }
+
+    function getLocationText(locationType, driver1, driver2) {
+      if (locationType === "南砂倉庫") {
+        return `【南砂倉庫】
+江東区南砂1-1-6
+
+${driver1}
+`;
+      }
+
+      if (locationType === "扇橋オフィス") {
+        return `【扇橋オフィス】
+江東区扇橋2-18-5
+
+${driver2}
+`;
+      }
+
+      return "";
+    }
+
+    function makeText() {
+      const timing = document.getElementById("timing").value;
+      const formattedDate = getFormattedDate(timing);
+      const jobContent = document.getElementById("jobContent").value.trim();
+      const reward = document.getElementById("reward").value.trim();
+      const units = document.getElementById("units").value.trim();
+      const driver1 = document.getElementById("driver1").value.trim();
+      const driver2 = document.getElementById("driver2").value.trim();
+      const arrivalTime = document.getElementById("arrivalTime").value.trim();
+      const locationType = document.getElementById("locationType").value;
+
+      let driverBlock = "";
+      if (driver1) driverBlock += driver1 + "\n";
+      if (driver2) driverBlock += driver2 + "\n";
+
+      const locationText = getLocationText(locationType, driver1, driver2);
+
+      const text =
+`${timing}
+${formattedDate}
+
+ケータリング
+${jobContent}
+${reward}
+
+${units}
+${driverBlock}
+${arrivalTime}
+${locationText}
+🚫全員にお願いです🚫
+『時間通り』に着車して下さい。
+
+セカンドテーブルさんは
+PDFの時間に合わせて
+準備と段取りしています。
+
+私が設定した時間に
+疑問があれば
+事前に遠慮なくご相談下さい。
+
+【立替金の領収書について】
+領収書の『裏面』に
+ケータリング
+と記入していただき
+ご自身の名前を書いて
+提出してください。
+
+稼働日から1週間以内に
+江戸川区春江町2-6-8
+1階
+ミネルバ宛
+郵送または持ち込み
+お願い致します`;
+
+      document.getElementById("result").value = text;
+    }
+
+    function copyText() {
+      const text = document.getElementById("result").value;
+
+      if (!text.trim()) {
+        alert("先に文章を作成してください。");
+        return;
+      }
+
+      navigator.clipboard.writeText(text)
+        .then(function() {
+          alert("コピーしました。");
+        })
+        .catch(function() {
+          alert("コピーに失敗しました。");
+        });
+    }
+
+    function openLineFromResult() {
+      const text = document.getElementById("result").value;
+
+      if (!text.trim()) {
+        alert("先に文章を作成してください。");
+        return;
+      }
+
+      const encoded = encodeURIComponent(text);
+      const url = "https://line.me/R/msg/text/?" + encoded;
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
