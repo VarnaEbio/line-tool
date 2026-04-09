@@ -142,6 +142,7 @@
 
     <div class="card">
       <h2>個別送信用ボタン</h2>
+      <div class="note">個別文を作成またはコピーして、必要なら上の「LINEを開く」を使ってください。</div>
       <div id="individualButtons"></div>
     </div>
   </div>
@@ -277,18 +278,27 @@ ${template}
         btnMake.onclick = function() {
           const text = buildMessageForNames([name]);
           document.getElementById("result").value = text;
+          alert(name + "さん用の文章を表示しました。");
         };
         container.appendChild(btnMake);
 
-        const btnLine = document.createElement("button");
-        btnLine.type = "button";
-        btnLine.className = "btn-line";
-        btnLine.textContent = name + "さん用をLINEで開く";
-        btnLine.onclick = function() {
+        const btnCopy = document.createElement("button");
+        btnCopy.type = "button";
+        btnCopy.className = "btn-sub";
+        btnCopy.textContent = name + "さん用をコピー";
+        btnCopy.onclick = function() {
           const text = buildMessageForNames([name]);
-          openLineText(text);
+          document.getElementById("result").value = text;
+
+          navigator.clipboard.writeText(text)
+            .then(function() {
+              alert(name + "さん用の文章をコピーしました。");
+            })
+            .catch(function() {
+              alert("コピーに失敗しました。");
+            });
         };
-        container.appendChild(btnLine);
+        container.appendChild(btnCopy);
       });
     }
 
