@@ -13,7 +13,7 @@
     }
 
     .wrap {
-      max-width: 700px;
+      max-width: 760px;
       margin: 0 auto;
     }
 
@@ -61,7 +61,7 @@
     }
 
     textarea {
-      min-height: 360px;
+      min-height: 420px;
       resize: vertical;
       line-height: 1.5;
     }
@@ -101,6 +101,26 @@
     .hidden {
       display: none;
     }
+
+    .check-list {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+    }
+
+    .check-item input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -138,15 +158,21 @@
       <h2>ドライバー</h2>
       <div id="driverFields"></div>
 
-      <label for="minamisunaDriver">南砂倉庫 担当</label>
-      <select id="minamisunaDriver">
-        <option value="">選択してください</option>
-      </select>
+      <div id="multiLocationArea">
+        <label>南砂倉庫 担当（複数選択可）</label>
+        <div id="minamisunaDriverList" class="check-list"></div>
 
-      <label for="ougibashiDriver">扇橋オフィス 担当</label>
-      <select id="ougibashiDriver">
-        <option value="">選択してください</option>
-      </select>
+        <label>扇橋オフィス 担当（複数選択可）</label>
+        <div id="ougibashiDriverList" class="check-list"></div>
+      </div>
+
+      <div id="singleLocationArea" class="hidden">
+        <label for="singleLocationType">着車場所（1台口用）</label>
+        <select id="singleLocationType">
+          <option value="南砂倉庫">南砂倉庫</option>
+          <option value="扇橋オフィス">扇橋オフィス</option>
+        </select>
+      </div>
 
       <button class="btn-main" type="button" onclick="makeText()">文章作成</button>
     </div>
@@ -201,6 +227,11 @@
       return numbers.slice(0, 2) + ":" + numbers.slice(2);
     }
 
+    function addSan(name) {
+      if (!name) return "";
+      return name.endsWith("さん") ? name : name + "さん";
+    }
+
     function buildDriverFields() {
       const container = document.getElementById("driverFields");
       container.innerHTML = "";
@@ -211,7 +242,7 @@
         input.type = "text";
         input.placeholder = "ドライバー" + i;
         input.className = i <= 2 ? "" : "hidden";
-        input.addEventListener("input", updateDriverSelects);
+        input.addEventListener("input", updateDriverSelectors);
         container.appendChild(input);
       }
     }
@@ -231,7 +262,15 @@
         }
       }
 
-      updateDriverSelects();
+      if (units === 1) {
+        document.getElementById("multiLocationArea").classList.add("hidden");
+        document.getElementById("singleLocationArea").classList.remove("hidden");
+      } else {
+        document.getElementById("multiLocationArea").classList.remove("hidden");
+        document.getElementById("singleLocationArea").classList.add("hidden");
+      }
+
+      updateDriverSelectors();
     }
 
     function getDriverNames() {
@@ -251,46 +290,58 @@
       return names;
     }
 
-    function updateDriverSelects() {
-      const names = getDriverNames();
-      const minamisuna = document.getElementById("minamisunaDriver");
-      const ougibashi = document.getElementById("ougibashiDriver");
+    function createCheckboxList(containerId, names, prefix) {
+      const container = document.getElementById(containerId);
+      const checkedValues = Array.from(container.querySelectorAll("input[type='checkbox']:checked")).map(cb => cb.value);
 
-      const currentMinamisuna = minamisuna.value;
-      const currentOugibashi = ougibashi.value;
+      container.innerHTML = "";
 
-      minamisuna.innerHTML = "";
-      ougibashi.innerHTML = "";
+      if (names.length === 0) {
+        container.innerHTML = '<div class="note">ドライバー名を入力すると、ここで選べます。</div>';
+        return;
+      }
 
-      const blank1 = document.createElement("option");
-      blank1.value = "";
-      blank1.textContent = "選択してください";
-      minamisuna.appendChild(blank1);
+      names.forEach(function(name, index) {
+        const item = document.createElement("label");
+        item.className = "check-item";
 
-      const blank2 = document.createElement("option");
-      blank2.value = "";
-      blank2.textContent = "選択してください";
-      ougibashi.appendChild(blank2);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = name;
+        checkbox.id = prefix + "_" + index;
 
-      names.forEach(function(name) {
-        const opt1 = document.createElement("option");
-        opt1.value = name;
-        opt1.textContent = name;
-        minamisuna.appendChild(opt1);
+        if (checkedValues.includes(name)) {
+          checkbox.checked = true;
+        }
 
-        const opt2 = document.createElement("option");
-        opt2.value = name;
-        opt2.textContent = name;
-        ougibashi.appendChild(opt2);
+        const span = document.createElement("span");
+        span.textContent = addSan(name);
+
+        item.appendChild(checkbox);
+        item.appendChild(span);
+        container.appendChild(item);
       });
+    }
 
-      if (names.includes(currentMinamisuna)) {
-        minamisuna.value = currentMinamisuna;
+    function updateDriverSelectors() {
+      const names = getDriverNames();
+      createCheckboxList("minamisunaDriverList", names, "minami");
+      createCheckboxList("ougibashiDriverList", names, "ougi");
+    }
+
+    function getCheckedNames(containerId) {
+      const checked = document.querySelectorAll(`#${containerId} input[type='checkbox']:checked`);
+      return Array.from(checked).map(cb => addSan(cb.value));
+    }
+
+    function getSingleLocationText(locationType) {
+      if (locationType === "南砂倉庫") {
+        return `【南砂倉庫】
+江東区南砂1-1-6`;
       }
 
-      if (names.includes(currentOugibashi)) {
-        ougibashi.value = currentOugibashi;
-      }
+      return `【扇橋オフィス】
+江東区扇橋2-18-5`;
     }
 
     function makeText() {
@@ -300,8 +351,6 @@
       const rewardRaw = document.getElementById("reward").value.trim();
       const unitsRaw = document.getElementById("units").value.trim();
       const arrivalRaw = document.getElementById("arrivalTime").value.trim();
-      const minamisunaDriver = document.getElementById("minamisunaDriver").value;
-      const ougibashiDriver = document.getElementById("ougibashiDriver").value;
       const driverNames = getDriverNames();
 
       const reward = formatYen(rewardRaw);
@@ -310,7 +359,34 @@
 
       let driverBlock = "";
       if (driverNames.length > 0) {
-        driverBlock = driverNames.join("\n");
+        driverBlock = driverNames.map(addSan).join("\n");
+      }
+
+      const unitNumber = Math.min(Math.max(parseInt(unitsRaw, 10) || 1, 1), 10);
+
+      let locationBlock = "";
+
+      if (unitNumber === 1) {
+        const singleLocationType = document.getElementById("singleLocationType").value;
+        locationBlock =
+`${arrivalTime}
+${getSingleLocationText(singleLocationType)}
+
+【配達先】
+PDF参照`;
+      } else {
+        const minamisunaNames = getCheckedNames("minamisunaDriverList");
+        const ougibashiNames = getCheckedNames("ougibashiDriverList");
+
+        locationBlock =
+`${arrivalTime}
+【南砂倉庫】
+江東区南砂1-1-6
+${minamisunaNames.join("\n")}
+
+【扇橋オフィス】
+江東区扇橋2-18-5
+${ougibashiNames.join("\n")}`;
       }
 
       const text =
@@ -324,14 +400,7 @@ ${reward}
 ${units}
 ${driverBlock}
 
-${arrivalTime}
-【南砂倉庫】
-江東区南砂1-1-6
-${minamisunaDriver}
-
-【扇橋オフィス】
-江東区扇橋2-18-5
-${ougibashiDriver}
+${locationBlock}
 
 🚫全員にお願いです🚫
 『時間通り』に着車して下さい。
